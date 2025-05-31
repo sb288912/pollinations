@@ -36,7 +36,7 @@ const affiliates = [
     blockedCountries: ["CN", "RU", "IR", "KP", "SY", "CU", "BY", "TM", "AE", "SA", "EG", "VN"],
     trackingLink: "https://nordvpn.sjv.io/c/6058776/432264/7452",
     triggerWords: ["VPN", "privacy", "online security", "secure browsing", "internet privacy", "encryption", "IP hiding", "private network", "cybersecurity", "data protection"],
-    weight: 2.5
+    weight: 1.0
   },
   // {
   //   id: "1548053",
@@ -72,19 +72,19 @@ const affiliates = [
     trackingLink: "https://capcutaffiliateprogram.pxf.io/c/6058776/2073393/22474",
     triggerWords: ["logo design", "banner design", "graphic design", "brand identity", "visual branding", "company logo", "marketing graphics", "design services", "branding elements", "creative design"]
   },
-  {
-    id: "2144039",
-    name: "Clawcloud (Singapore) Private Limited",
-    product: "Dedicated VPS hosting with high bandwidth and service availability.",
-    description: "Get reliable dedicated VPS hosting with high bandwidth from Clawcloud, starting at $10/mo.",
-    audience: "Businesses and individuals seeking reliable and high-performance web hosting solutions.",
-    categories: ["Internet Service Provider", "Web Hosting"],
-    blockedCountries: ["CN", "IR", "KP", "SY", "CU"],
-    tags: ["webhosting", "VPS", "dedicated VPS"],
-    trackingLink: "https://clawcloudsingaporeprivatelimited.sjv.io/c/6058776/2144039/26865",
-    triggerWords: ["web hosting", "VPS", "dedicated server", "cloud hosting", "server hosting", "hosting service", "virtual private server", "website hosting", "hosting provider", "bandwidth"],
-    weight: 2.0
-  },
+  // {
+  //   id: "2144039",
+  //   name: "Clawcloud (Singapore) Private Limited",
+  //   product: "Dedicated VPS hosting with high bandwidth and service availability.",
+  //   description: "Get reliable dedicated VPS hosting with high bandwidth from Clawcloud, starting at $10/mo.",
+  //   audience: "Businesses and individuals seeking reliable and high-performance web hosting solutions.",
+  //   categories: ["Internet Service Provider", "Web Hosting"],
+  //   blockedCountries: ["CN", "IR", "KP", "SY", "CU"],
+  //   tags: ["webhosting", "VPS", "dedicated VPS"],
+  //   trackingLink: "https://clawcloudsingaporeprivatelimited.sjv.io/c/6058776/2144039/26865",
+  //   triggerWords: ["web hosting", "VPS", "dedicated server", "cloud hosting", "server hosting", "hosting service", "virtual private server", "website hosting", "hosting provider", "bandwidth"],
+  //   weight: 1.5
+  // },
   {
     id: "2774941",
     name: "HeyReal.ai",
@@ -95,7 +95,7 @@ const affiliates = [
     blockedCountries: ["CN", "IR", "KP", "SY", "CU"],
     trackingLink: "https://go.sjv.io/c/6058776/2774941/30752",
     triggerWords: ["ai chatbot", "character ai", "virtual companion", "ai chat", "realistic ai", "custom ai character", "talk to ai"],
-    weight: 2.0
+    weight: 0.7
   },
   // {
   //   id: "lovemy",
@@ -243,7 +243,8 @@ const affiliates = [
     categories: ["Internet Service Provider", "Software"],
     blockedCountries: ["CN", "RU", "IR", "KP", "SY", "CU", "BY", "TM", "AE", "SA", "EG", "VN"],
     trackingLink: "https://iproyal.sjv.io/c/6058776/1281667/15731",
-    triggerWords: ["proxy", "security", "privacy", "online", "anonymous", "data protection", "internet security"]
+    triggerWords: ["proxy", "security", "privacy", "online", "anonymous", "data protection", "internet security"],
+    weight: 1.3
   },
   {
     id: "1826593",
@@ -277,7 +278,7 @@ const affiliates = [
     blockedCountries: ["CN", "IR", "KP", "SY", "CU", "RU"],
     trackingLink: "https://getwren.ai?via=397623",
     triggerWords: ["business intelligence", "data analytics", "GenBI", "AI analytics", "data visualization", "SQL", "spreadsheets", "dashboards", "data insights", "business data"],
-    weight: 3.0
+    weight: 1.0
   },
   {
     id: "2699274",
@@ -290,7 +291,7 @@ const affiliates = [
     tags: ["AI language learning"],
     trackingLink: "https://talkpal.sjv.io/c/6058776/2699274/30644",
     triggerWords: ["language learning", "AI language", "language practice", "conversation practice", "language tutor", "language app", "language learning software", "speaking practice", "language skills", "AI tutor"],
-    weight: 1.8
+    weight: 2
   },
   {
     id: "511355",
@@ -417,6 +418,42 @@ const affiliates = [
     trackingLink: "https://hentai.ai/?via=pollinations",
     triggerWords: ["hentai", "anime", "manga", "adult content", "NSFW", "uncensored", "adult chat", "fantasy chat", "anime characters", "adult anime"],
     weight: 0.5
+  },
+  {
+    id: "letsenhance",
+    name: "Let's Enhance",
+    product: "AI image enhancement and upscaling",
+    description: "Improve image quality and resolution with Let's Enhance AI.",
+    audience: "Photographers, designers, businesses needing high-quality images",
+    categories: ["AI", "Image Processing", "Software", "Photography"],
+    blockedCountries: [],
+    trackingLink: "https://letsenhance.io?via=thomas37",
+    triggerWords: ["image enhancer", "upscale image", "photo quality", "increase resolution", "AI image", "HD photo", "4k photo", "image processing", "photo restoration", "image upscaler"],
+    weight: 1.5
+  },
+  {
+    id: "windsurf",
+    name: "Windsurf",
+    product: "AI-powered code editor and IDE",
+    description: "Windsurf is the worlds first AI-native IDE that keeps developers in flow with Cascade, an AI agent that codes, fixes and thinks 10 steps ahead.",
+    audience: "Developers, programmers, software engineers, and coding teams",
+    categories: ["AI Tools", "Software Development", "Developer Tools", "IDEs"],
+    blockedCountries: [],
+    trackingLink: "https://windsurf.com/refer?referral_code=da0ef28ab0",
+    triggerWords: ["code editor", "IDE", "AI coding", "programming", "software development", "code assistant", "developer tools", "coding AI", "AI agent", "cascade", "windsurf", "codeium", "autocomplete", "code completion"],
+    weight: 1.7
+  },
+  {
+    id: "claude",
+    name: "Claude AI",
+    product: "Conversational AI assistant by Anthropic",
+    description: "Claude is a helpful, honest, and harmless AI assistant with Constitutional AI framework, massive context window up to 1 million tokens, and advanced reasoning capabilities.",
+    audience: "Professionals, researchers, developers, writers, lawyers, teachers, and business users",
+    categories: ["AI Tools", "Chatbots", "Content Creation", "Research Tools", "Productivity"],
+    blockedCountries: [],
+    trackingLink: "https://claude.ai/referral/YBXCHpoitg",
+    triggerWords: ["AI assistant", "chatbot", "AI chat", "claude", "anthropic", "constitutional AI", "large language model", "LLM", "AI writing", "document analysis", "summarization", "research assistant", "AI safety", "conversational AI"],
+    weight: 1.8
   }
 ];
 

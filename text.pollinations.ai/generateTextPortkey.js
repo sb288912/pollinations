@@ -1,7 +1,6 @@
 import dotenv from 'dotenv';
 import { createOpenAICompatibleClient } from './genericOpenAIClient.js';
 import debug from 'debug';
-import { execSync } from 'child_process';
 import googleCloudAuth from './auth/googleCloudAuth.js';
 import { extractApiVersion, extractDeploymentName, extractResourceName, generatePortkeyHeaders } from './portkeyUtils.js';
 import { findModelByName } from './availableModels.js';
@@ -14,33 +13,36 @@ const errorLog = debug('pollinations:portkey:error');
 // Model mapping for Portkey
 const MODEL_MAPPING = {
     // Azure OpenAI models
-    'openai': 'gpt-4.1-nano',       // Maps to portkeyConfig['gpt-4o-mini']
-    'openai-large': 'azure-gpt-4.1-mini',
-    'openai-xlarge': 'azure-gpt-4.1-xlarge', // Maps to the new xlarge endpoint
-    'openai-reasoning': 'o4-mini', // Maps to portkeyConfig['o1-mini'],
+    'openai-fast': 'gpt-4.1-nano',
+    'openai': 'gpt-4.1-mini',       // Maps to portkeyConfig['gpt-4o-mini']
+    'openai-large': 'azure-gpt-4.1',
+    //'openai-xlarge': 'azure-gpt-4.1-xlarge', // Maps to the new xlarge endpoint
+    //'openai-reasoning': 'o4-mini', // Maps to portkeyConfig['o1-mini'],
     // 'openai-audio': 'gpt-4o-mini-audio-preview',
     'openai-audio': 'gpt-4o-audio-preview',
-    'roblox-rp': 'gpt-4o-mini-roblox-rp', // Roblox roleplay model
-    'command-r': 'Cohere-command-r-plus-08-2024-jt', // Cohere Command R Plus model
-    'gemini': 'gemini-2.5-flash-preview-04-17',
-    'gemini-thinking': 'gemini-2.0-flash-thinking-exp-01-21',
+    //'openai-roblox': 'gpt-4.1-mini-roblox', // Roblox model
+    //'roblox-rp': 'gpt-4o-mini-roblox-rp', // Roblox roleplay model
+    //'command-r': 'Cohere-command-r-plus-08-2024-jt', // Cohere Command R Plus model
+    //'gemini': 'gemini-2.5-flash-preview-04-17',
+    //'gemini-thinking': 'gemini-2.0-flash-thinking-exp-01-21',
+    // Azure Grok model
+    'grok': 'azure-grok',
     // Cloudflare models
     'llama': '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
     'llamascout': '@cf/meta/llama-4-scout-17b-16e-instruct',
-    'deepseek-reasoning': '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
-    'llamaguard': '@hf/thebloke/llamaguard-7b-awq',
+    'deepseek-reasoning': 'MAI-DS-R1',
+    //'llamaguard': '@hf/thebloke/llamaguard-7b-awq',
     'phi': 'phi-4-instruct',
-    'phi-mini': 'phi-4-mini-instruct',
+    //'phi-mini': 'phi-4-mini-instruct',
     // Scaleway models
     'qwen-coder': 'qwen2.5-coder-32b-instruct',
     'mistral': 'mistral-small-3.1-24b-instruct-2503',  // Updated to use Scaleway Mistral model
-    'deepseek-reasoning-large': 'deepseek-r1-distill-llama-70b',
     // Modal models
     'hormoz': 'Hormoz-8B',
     // OpenRouter models
-    'claude': 'anthropic/claude-3.5-haiku-20241022',
+    //'claude': 'anthropic/claude-3.5-haiku-20241022',
     // Cloudflare models
-    'qwen-qwq': '@cf/qwen/qwq-32b',
+    //'qwen-qwq': '@cf/qwen/qwq-32b',
     // DeepSeek models
     'deepseek': 'DeepSeek-V3-0324'
 };
@@ -67,31 +69,34 @@ You never use phrases that imply moral superiority or a sense of authority, incl
 // Default system prompts for different models
 const SYSTEM_PROMPTS = {
     // OpenAI models
+    'openai-fast': BASE_PROMPTS.conversational,
     'openai': BASE_PROMPTS.conversational,
     'openai-large': BASE_PROMPTS.conversational,
-    'openai-xlarge': BASE_PROMPTS.conversational,
-    'gemini': BASE_PROMPTS.conversational,
+    // Grok model
+    'grok': BASE_PROMPTS.conversational,
+    //'openai-xlarge': BASE_PROMPTS.conversational,
+    'openai-roblox': BASE_PROMPTS.conversational,
+    //'gemini': BASE_PROMPTS.conversational,
     // Cloudflare models
     'llama': BASE_PROMPTS.conversational,
-    'deepseek-reasoning-large': BASE_PROMPTS.helpful,
-    'deepseek-reasoning': BASE_PROMPTS.unrestricted,
-    'llamaguard': BASE_PROMPTS.moderation,
+    'deepseek-reasoning': BASE_PROMPTS.conversational,
+    //'llamaguard': BASE_PROMPTS.moderation,
     'phi': BASE_PROMPTS.conversational,
-    'phi-mini': BASE_PROMPTS.conversational,
+    //'phi-mini': BASE_PROMPTS.conversational,
     // Scaleway models
     'mistral': BASE_PROMPTS.conversational,
     'qwen-coder': BASE_PROMPTS.coding,
-    'gemini-thinking': BASE_PROMPTS.gemini + ' When appropriate, show your reasoning step by step.',
+    //'gemini-thinking': BASE_PROMPTS.gemini + ' When appropriate, show your reasoning step by step.',
     // Modal models
     'hormoz': BASE_PROMPTS.hormoz,
     // OpenRouter models
-    'claude': 'You are Claude, a helpful AI assistant created by Anthropic. You provide accurate, balanced information and can assist with a wide range of tasks while maintaining a respectful and supportive tone.',
+    //'claude': 'You are Claude, a helpful AI assistant created by Anthropic. You provide accurate, balanced information and can assist with a wide range of tasks while maintaining a respectful and supportive tone.',
     // Cloudflare models
-    'qwen-qwq': BASE_PROMPTS.conversational,
+    //'qwen-qwq': BASE_PROMPTS.conversational,
     // DeepSeek models
     'deepseek': BASE_PROMPTS.conversational,
     // Cohere models
-    'command-r': BASE_PROMPTS.conversational
+    //'command-r': BASE_PROMPTS.conversational
 };
 
 // Default options
@@ -120,12 +125,12 @@ const baseAzureConfig = {
  * @param {string} modelName - Model name to use if not extracted from endpoint
  * @returns {Object} - Azure model configuration
  */
-function createAzureModelConfig(apiKey, endpoint, modelName) {
-    const deploymentId = extractDeploymentName(endpoint) || modelName;
+function createAzureModelConfig(apiKey, endpoint, modelName, resourceName = null) {
+    const deploymentId = extractDeploymentName(endpoint) || modelName; 
     return {
         ...baseAzureConfig,
         'azure-api-key': apiKey,
-        'azure-resource-name': extractResourceName(endpoint),
+        'azure-resource-name': resourceName || extractResourceName(endpoint),
         'azure-deployment-id': deploymentId,
         'azure-api-version': extractApiVersion(endpoint),
         'azure-model-name': deploymentId,
@@ -140,7 +145,6 @@ const baseCloudflareConfig = {
     authKey: process.env.CLOUDFLARE_AUTH_TOKEN,
     // Set default max_tokens to 8192 (increased from 256)
     'max-tokens': 8192,
-    'temperature': 0.1,
 };
 
 // Base configuration for Scaleway models
@@ -160,8 +164,9 @@ const baseMistralConfig = {
     'custom-host': process.env.SCALEWAY_MISTRAL_BASE_URL,
     authKey: process.env.SCALEWAY_MISTRAL_API_KEY,
     // Set default max_tokens to 8192
-    temperature: 0.3,
     'max-tokens': 8192,
+    // Default temperature for Mistral models (low/focused)
+    temperature: 0.3,
 };
 
 // Base configuration for Modal models
@@ -182,20 +187,21 @@ const baseOpenRouterConfig = {
     'max-tokens': 4096,
 };
 
-// Base configuration for Groq models
-const baseGroqConfig = {
-    provider: 'groq',
-    'custom-host': 'https://api.groq.com/openai/v1',
-    authKey: process.env.GROQ_API_KEY,
-    // Set default max_tokens to 4096
-    'max-tokens': 4096,
-};
-
 // DeepSeek model configuration
 const baseDeepSeekConfig = {
     provider: 'openai',
     'custom-host': process.env.AZURE_DEEPSEEK_V3_ENDPOINT,
     authKey: process.env.AZURE_DEEPSEEK_V3_API_KEY,
+    'auth-header-name': 'Authorization',
+    'auth-header-value-prefix': '',
+    'max-tokens': 8192
+};
+
+
+const baseDeepSeekReasoningConfig = {
+    provider: 'openai',
+    'custom-host': process.env.AZURE_DEEPSEEK_REASONING_ENDPOINT,
+    authKey: process.env.AZURE_DEEPSEEK_REASONING_API_KEY,
     'auth-header-name': 'Authorization',
     'auth-header-value-prefix': '',
     'max-tokens': 8192
@@ -209,6 +215,18 @@ const baseDeepSeekConfig = {
 function createDeepSeekModelConfig(additionalConfig = {}) {
     return {
         ...baseDeepSeekConfig,
+        ...additionalConfig
+    };
+}
+
+/**
+ * Creates a DeepSeek Reasoning model configuration
+ * @param {Object} additionalConfig - Additional configuration to merge with base config
+ * @returns {Object} - DeepSeek Reasoning model configuration
+ */
+function createDeepSeekReasoningConfig(additionalConfig = {}) {
+    return {
+        ...baseDeepSeekReasoningConfig,
         ...additionalConfig
     };
 }
@@ -273,25 +291,27 @@ function createOpenRouterModelConfig(additionalConfig = {}) {
     };
 }
 
-/**
- * Creates a Groq model configuration
- * @param {Object} additionalConfig - Additional configuration to merge with base config
- * @returns {Object} - Groq model configuration
- */
-function createGroqModelConfig(additionalConfig = {}) {
-    return {
-        ...baseGroqConfig,
-        ...additionalConfig
-    };
-}
+
 
 // Unified flat Portkey configuration for all providers and models - using functions that return fresh configurations
 export const portkeyConfig = {
+    // Azure Grok model configuration
+    'azure-grok': () =>  createAzureModelConfig(
+            process.env.AZURE_GROK_API_KEY,
+            process.env.AZURE_GROK_ENDPOINT,
+            `grok-3-mini`,
+            'pollinations-safety'
+    ),
     // Azure OpenAI model configurations
     'gpt-4.1-nano': () => createAzureModelConfig(
+        process.env.AZURE_OPENAI_NANO_API_KEY,
+        process.env.AZURE_OPENAI_NANO_ENDPOINT,
+        'gpt-4.1-nano'
+    ),
+    'gpt-4.1-mini': () => createAzureModelConfig(
         process.env.AZURE_OPENAI_API_KEY,
         process.env.AZURE_OPENAI_ENDPOINT,
-        'gpt-4.1-nano'
+        'gpt-4.1-mini'
     ),
     'gpt-4o': () => createAzureModelConfig(
         process.env.AZURE_OPENAI_LARGE_API_KEY,
@@ -323,10 +343,15 @@ export const portkeyConfig = {
         process.env.AZURE_OPENAI_ROBLOX_ENDPOINT,
         'gpt-4o-mini'
     ),
-    'azure-gpt-4.1-mini': () => createAzureModelConfig(
+    'gpt-4.1-mini-roblox': () => createAzureModelConfig(
+        process.env.AZURE_OPENAI_ROBLOX_KEY,
+        process.env.AZURE_OPENAI_ROBLOX_ENDPOINT,
+        'gpt-4.1-mini'
+    ),
+    'azure-gpt-4.1': () => createAzureModelConfig(
         process.env.AZURE_OPENAI_41_API_KEY,
         process.env.AZURE_OPENAI_41_ENDPOINT,
-        'gpt-4.1-mini'
+        'gpt-4.1'
     ),
     'azure-gpt-4.1-xlarge': () => createAzureModelConfig(
         process.env.AZURE_OPENAI_XLARGE_API_KEY,
@@ -339,8 +364,7 @@ export const portkeyConfig = {
         authKey: process.env.AZURE_COMMAND_R_API_KEY,
         'auth-header-name': 'Authorization',
         'auth-header-value-prefix': '',
-        'max-tokens': 800,
-        temperature: 0.3
+        'max-tokens': 800
     }),
     // Cloudflare model configurations
     '@cf/meta/llama-3.3-70b-instruct-fp8-fast': () => createCloudflareModelConfig(),
@@ -374,7 +398,6 @@ export const portkeyConfig = {
     // Mistral model configuration
     'mistral-small-3.1-24b-instruct-2503': () => createMistralModelConfig({
         'max-tokens': 8192,
-        temperature: 0.3,
         'model': "mistral-small-3.1-24b-instruct-2503"
     }),
     // Modal model configurations
@@ -415,6 +438,7 @@ export const portkeyConfig = {
         'strict-openai-compliance': 'false'
     }),
     'DeepSeek-V3-0324': () => createDeepSeekModelConfig(),
+    'MAI-DS-R1': () => createDeepSeekReasoningConfig(),
 };
 
 /**
@@ -461,7 +485,7 @@ export const generateTextPortkey = createOpenAICompatibleClient({
             const modelName = requestBody.model; // This is already mapped by genericOpenAIClient
 
             // Check character limit
-            const MAX_CHARS = 512000;
+            const MAX_CHARS = 2048000;
             const totalChars = countMessageCharacters(requestBody.messages);
 
             if (totalChars > MAX_CHARS) {
@@ -504,18 +528,33 @@ export const generateTextPortkey = createOpenAICompatibleClient({
                 }
             }
 
-            // Special handling for o1-mini model which requires max_completion_tokens instead of max_tokens
-            if (modelName === 'o1-mini' && requestBody.max_tokens) {
-                log(`Converting max_tokens to max_completion_tokens for o1-mini model`);
-                requestBody.max_completion_tokens = requestBody.max_tokens;
-                delete requestBody.max_tokens;
-            }
+            // Apply model-specific sampling parameter defaults if not provided by user
+            // Only set defaults if user hasn't provided values (they take precedence)
+            const samplingParams = ['temperature', 'top_p', 'presence_penalty', 'frequency_penalty'];
+            samplingParams.forEach(param => {
+                if (requestBody[param] === undefined && config[param] !== undefined) {
+                    log(`Setting ${param} to model default value: ${config[param]}`);
+                    requestBody[param] = config[param];
+                }
+            });
 
             return requestBody;
         } catch (error) {
             errorLog('Error in request transformation:', error);
             throw error;
         }
+    },
+    formatResponse: (message) => {
+        // fix deepseek-v3 response
+        if (!message.content && message.reasoning_content) {
+            message.content = message.reasoning_content;
+            message.reasoning_content = null;
+        }
+        if (message.content && message.reasoning_content) {
+            message.content = `<think>${message.reasoning_content}</think>${message.content}`;
+            message.reasoning_content = null;
+        }
+        return message;
     },
 
     // Model mapping, system prompts, and default options
